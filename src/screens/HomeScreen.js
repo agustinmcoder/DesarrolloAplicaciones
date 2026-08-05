@@ -1,16 +1,15 @@
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 
-// Pantalla de bienvenida del Checkpoint 1.
-// Confirma que la estructura base y el renderizado mobile funcionan.
-export default function WelcomeScreen() {
+// Pantalla principal donde se listaran las tareas.
+// Por ahora solo muestra la estructura base; la lista real
+// de tareas se agrega en los proximos modulos.
+export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>TaskFlow</Text>
-      <Text style={styles.subtitle}>Estructura base lista</Text>
-      <StatusBar style="light" />
+      <Text style={styles.title}>Mis tareas</Text>
+      <Text style={styles.placeholder}>Todavia no hay tareas cargadas</Text>
     </View>
   );
 }
@@ -19,18 +18,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
     padding: spacing.lg,
   },
   title: {
-    fontSize: 40,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: spacing.sm,
   },
-  subtitle: {
-    fontSize: 16,
+  placeholder: {
+    fontSize: 14,
     color: colors.textMuted,
   },
 });

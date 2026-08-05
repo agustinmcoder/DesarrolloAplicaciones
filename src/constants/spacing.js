@@ -1,4 +1,4 @@
-// Escala de espaciados reutilizable para paddings/margins.
+// Escala de espaciados reutilizable para paddings y margins.
 
 export const spacing = {
   xs: 4,

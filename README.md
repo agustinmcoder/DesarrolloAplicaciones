@@ -1,25 +1,26 @@
 # TaskFlow
 
-App móvil de gestión de tareas, desarrollada con [Expo](https://expo.dev) (React Native).
-
-Este repositorio corresponde al **Checkpoint 1: Estructura Base** del proyecto final. Sienta las bases (proyecto Expo inicializado, arquitectura de carpetas y pantalla de bienvenida) sobre las que se construirán los próximos módulos: pantallas de tareas, formularios, navegación y conexión con Firebase.
+App movil de gestion de tareas, desarrollada con [Expo](https://expo.dev) (React Native).
 
 ## Estructura del proyecto
 
 ```
 taskflow-app/
-├── App.js                 # Punto de entrada, renderiza WelcomeScreen
-├── index.js                # Registro de la app (generado por Expo)
-├── app.json                 # Configuración de Expo
+├── App.js                    # Punto de entrada, renderiza ProfileScreen
+├── index.js                   # Registro de la app (generado por Expo)
+├── app.json                    # Configuracion de Expo
 └── src/
-    ├── components/          # Piezas reutilizables de UI
-    ├── screens/              # Vistas principales de la app
-    │   └── WelcomeScreen.js
-    ├── assets/               # Imágenes y fuentes locales
-    ├── theme/                # Colores y estilos globales
+    ├── components/             # Piezas reutilizables de UI
+    │   └── ProfileCard.js
+    ├── screens/                 # Vistas principales de la app
+    │   ├── WelcomeScreen.js
+    │   ├── HomeScreen.js
+    │   └── ProfileScreen.js
+    ├── assets/                  # Imagenes y fuentes locales
+    ├── constants/                # Colores y espaciados globales
     │   ├── colors.js
     │   └── spacing.js
-    └── services/             # Lógica de conexión a APIs/Firebase (próximos módulos)
+    └── services/                 # Conexion a APIs/Firebase (proximos modulos)
 ```
 
 ## Requisitos previos
@@ -27,39 +28,43 @@ taskflow-app/
 - [Node.js](https://nodejs.org/) (LTS recomendado)
 - [Expo Go](https://expo.dev/go) instalado en tu celular (Android/iOS), o un emulador configurado
 
-## Cómo ejecutarlo localmente
+## Como ejecutarlo localmente
 
-1. Cloná el repositorio:
+1. Clona el repositorio:
 
    ```bash
    git clone <url-del-repo>
    cd taskflow-app
    ```
 
-2. Instalá las dependencias:
+2. Instala las dependencias:
 
    ```bash
    npm install
    ```
 
-3. Iniciá el servidor de desarrollo:
+3. Inicia el servidor de desarrollo:
 
    ```bash
    npx expo start
    ```
 
-4. Escaneá el código QR con la app **Expo Go** (Android/iOS) o presioná `a` / `i` en la terminal para abrir en un emulador Android/iOS.
+4. Escanea el codigo QR con la app **Expo Go** (Android/iOS) o presiona `a` / `i` en la terminal para abrir en un emulador Android/iOS.
 
-## Estado actual (Checkpoint 1)
+## Estado actual (Checkpoint 2)
 
-- [x] Proyecto Expo inicializado con plantilla Blank
-- [x] Estructura de carpetas `src/` (`components`, `screens`, `assets`, `theme`, `services`)
-- [x] `App.js` renderiza una pantalla de bienvenida con `View`, `Text` y `StyleSheet`
+Pantallas visualizadas en el emulador:
 
-## Próximos pasos
+- **ProfileScreen**: pantalla renderizada por defecto desde `App.js`. Muestra el componente `ProfileCard` con datos de prueba (nombre, rol e imagen de avatar).
+- **HomeScreen**: estructura base de la pantalla de tareas, lista para recibir el listado real en el proximo modulo.
+- **WelcomeScreen**: pantalla del Checkpoint 1, se mantiene en `src/screens` sin estar montada en `App.js`.
 
-- **Módulo 2:** pantallas de lista de tareas y detalle
-- **Módulos 3-4:** formularios y renderizado dinámico de listas
-- **Módulo 5:** navegación entre pantallas
-- **Módulo 6:** estado global de tareas
-- **Módulo 7:** conexión con Firebase
+El componente `ProfileCard` (`src/components/ProfileCard.js`) recibe `name`, `role` e `image` por props, no tiene datos hardcodeados, y sus estilos estan definidos con `StyleSheet.create`.
+
+## Proximos pasos
+
+- **Modulo 3:** formularios para crear tareas
+- **Modulo 5:** navegacion entre HomeScreen y ProfileScreen
+- **Modulo 6:** estado global de tareas
+- **Modulo 7:** conexion con Firebase
+- **Modulo 8:** ProfileCard conectado a camara y datos de usuario autenticado

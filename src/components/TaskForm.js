@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,11 +15,10 @@ const CATEGORIES = ['Personal', 'Trabajo', 'Estudio'];
 const TITLE_MIN_LENGTH = 5;
 const DESCRIPTION_MIN_LENGTH = 10;
 
-// Formulario de creacion de tareas. Por ahora el "guardado" es
-// simulado: valida, loguea el objeto final y limpia los campos.
-// A partir del Modulo 6 esto va a disparar una action de Redux
-// en lugar de un console.log.
-export default function AddTaskScreen() {
+// Formulario de creacion de tareas. Vive como header de la
+// FlatList en HomeScreen; al guardar, delega la tarea nueva al
+// padre via onAddTask en lugar de manejar la lista por su cuenta.
+export default function TaskForm({ onAddTask }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -72,13 +68,16 @@ export default function AddTaskScreen() {
     }
 
     const task = {
+      id: Date.now().toString(),
       title: title.trim(),
       description: description.trim(),
       category,
+      completed: false,
       createdAt: new Date(),
     };
 
     console.log('Nueva tarea:', task);
+    onAddTask(task);
     Alert.alert('Exito', 'Tarea capturada localmente');
     resetForm();
   };
@@ -90,105 +89,90 @@ export default function AddTaskScreen() {
   ];
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title}>Nueva tarea</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Nueva tarea</Text>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Titulo</Text>
-          <TextInput
-            style={getInputStyle('title')}
-            value={title}
-            onChangeText={setTitle}
-            onFocus={() => setFocusedField('title')}
-            onBlur={() => handleBlur('title')}
-            placeholder="Ej: Terminar informe mensual"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            autoCapitalize="sentences"
-            returnKeyType="next"
-          />
-          {touched.title && errors.title && (
-            <Text style={styles.errorText}>{errors.title}</Text>
-          )}
-        </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Titulo</Text>
+        <TextInput
+          style={getInputStyle('title')}
+          value={title}
+          onChangeText={setTitle}
+          onFocus={() => setFocusedField('title')}
+          onBlur={() => handleBlur('title')}
+          placeholder="Ej: Terminar informe mensual"
+          placeholderTextColor={colors.textMuted}
+          selectionColor={colors.primary}
+          autoCapitalize="sentences"
+          returnKeyType="next"
+        />
+        {touched.title && errors.title && (
+          <Text style={styles.errorText}>{errors.title}</Text>
+        )}
+      </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Descripcion</Text>
-          <TextInput
-            style={[getInputStyle('description'), styles.textArea]}
-            value={description}
-            onChangeText={setDescription}
-            onFocus={() => setFocusedField('description')}
-            onBlur={() => handleBlur('description')}
-            placeholder="Agrega detalles sobre la tarea"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            autoCapitalize="sentences"
-            multiline
-            numberOfLines={4}
-            returnKeyType="done"
-          />
-          {touched.description && errors.description && (
-            <Text style={styles.errorText}>{errors.description}</Text>
-          )}
-        </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Descripcion</Text>
+        <TextInput
+          style={[getInputStyle('description'), styles.textArea]}
+          value={description}
+          onChangeText={setDescription}
+          onFocus={() => setFocusedField('description')}
+          onBlur={() => handleBlur('description')}
+          placeholder="Agrega detalles sobre la tarea"
+          placeholderTextColor={colors.textMuted}
+          selectionColor={colors.primary}
+          autoCapitalize="sentences"
+          multiline
+          numberOfLines={4}
+          returnKeyType="done"
+        />
+        {touched.description && errors.description && (
+          <Text style={styles.errorText}>{errors.description}</Text>
+        )}
+      </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Categoria</Text>
-          <View style={styles.categoryRow}>
-            {CATEGORIES.map((item) => {
-              const selected = item === category;
-              return (
-                <TouchableOpacity
-                  key={item}
-                  style={[styles.categoryChip, selected && styles.categoryChipSelected]}
-                  onPress={() => setCategory(item)}
+      <View style={styles.field}>
+        <Text style={styles.label}>Categoria</Text>
+        <View style={styles.categoryRow}>
+          {CATEGORIES.map((item) => {
+            const selected = item === category;
+            return (
+              <TouchableOpacity
+                key={item}
+                style={[styles.categoryChip, selected && styles.categoryChipSelected]}
+                onPress={() => setCategory(item)}
+              >
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    selected && styles.categoryChipTextSelected,
+                  ]}
                 >
-                  <Text
-                    style={[
-                      styles.categoryChipText,
-                      selected && styles.categoryChipTextSelected,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
+      </View>
 
-        <TouchableOpacity
-          style={[styles.saveButton, hasErrors && styles.saveButtonDisabled]}
-          onPress={handleAddTask}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.saveButtonText}>Guardar tarea</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <TouchableOpacity
+        style={[styles.saveButton, hasErrors && styles.saveButtonDisabled]}
+        onPress={handleAddTask}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.saveButtonText}>Guardar tarea</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.listTitle}>Mis tareas</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
   container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
+    marginBottom: spacing.sm,
   },
   title: {
     fontSize: 28,
@@ -270,5 +254,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  listTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
 });

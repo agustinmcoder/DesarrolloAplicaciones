@@ -1,8 +1,14 @@
-import HomeScreen from './src/screens/HomeScreen';
+import { TasksProvider } from './src/context/TasksContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
-// Punto de entrada de la app. A partir del Modulo 5 esto se
-// reemplaza por el navigator; por ahora HomeScreen concentra
-// formulario, lista y detalle de tareas en una sola pantalla.
+// Punto de entrada de la app. AppNavigator concentra la navegacion
+// (tabs + stack de tareas) y TasksProvider expone el arreglo de
+// tareas a cualquier pantalla que lo necesite, sin pasar props a
+// mano de componente en componente.
 export default function App() {
-  return <HomeScreen />;
+  return (
+    <TasksProvider>
+      <AppNavigator />
+    </TasksProvider>
+  );
 }

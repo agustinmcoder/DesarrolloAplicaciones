@@ -11,16 +11,12 @@ const formatDate = (date) =>
     minute: '2-digit',
   });
 
-// Vista de detalle de una tarea. Todavia no usamos React Navigation
-// (eso llega en el Modulo 5), asi que HomeScreen simplemente deja
-// de renderizar la lista y muestra esto en su lugar.
-export default function TaskDetail({ task, onBack }) {
+// Vista de detalle de una tarea. Vive dentro del Stack de tareas,
+// asi que volver a la lista lo resuelve la flecha nativa del
+// header en lugar de un boton propio.
+export default function TaskDetail({ task, onToggleComplete }) {
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={onBack}>
-        <Text style={styles.backButtonText}>‹ Volver</Text>
-      </TouchableOpacity>
-
       <View style={styles.card}>
         <View style={styles.categoryBadge}>
           <Text style={styles.categoryBadgeText}>{task.category}</Text>
@@ -35,9 +31,15 @@ export default function TaskDetail({ task, onBack }) {
         <Text style={styles.date}>{formatDate(task.createdAt)}</Text>
 
         <Text style={styles.label}>Estado</Text>
-        <Text style={styles.status}>
+        <Text style={task.completed ? styles.statusDone : styles.statusPending}>
           {task.completed ? 'Completada' : 'Pendiente'}
         </Text>
+
+        <TouchableOpacity style={styles.toggleButton} onPress={onToggleComplete}>
+          <Text style={styles.toggleButtonText}>
+            {task.completed ? 'Marcar como pendiente' : 'Marcar como completada'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -48,15 +50,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     padding: spacing.lg,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginBottom: spacing.lg,
-  },
-  backButtonText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
   },
   card: {
     backgroundColor: colors.surface,
@@ -100,9 +93,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
   },
-  status: {
+  statusPending: {
+    fontSize: 15,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  statusDone: {
     fontSize: 15,
     color: colors.secondary,
+    fontWeight: '600',
+  },
+  toggleButton: {
+    marginTop: spacing.lg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  toggleButtonText: {
+    color: colors.primary,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

@@ -15,9 +15,9 @@ const CATEGORIES = ['Personal', 'Trabajo', 'Estudio'];
 const TITLE_MIN_LENGTH = 5;
 const DESCRIPTION_MIN_LENGTH = 10;
 
-// Formulario de creacion de tareas. Vive como header de la
-// FlatList en HomeScreen; al guardar, delega la tarea nueva al
-// padre via onAddTask en lugar de manejar la lista por su cuenta.
+// Formulario de creacion de tareas. Es un componente "tonto": no
+// sabe nada de navegacion ni de la lista completa, solo valida y
+// delega la tarea nueva al padre via onAddTask (ver TaskFormScreen).
 export default function TaskForm({ onAddTask }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -50,13 +50,6 @@ export default function TaskForm({ onAddTask }) {
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setCategory(CATEGORIES[0]);
-    setTouched({ title: false, description: false });
-  };
-
   const handleAddTask = () => {
     // Al intentar guardar marcamos todo como tocado para que
     // se vean los errores aunque el usuario no haya pasado por
@@ -77,9 +70,12 @@ export default function TaskForm({ onAddTask }) {
     };
 
     console.log('Nueva tarea:', task);
+    // onAddTask guarda la tarea y navega de vuelta a la lista, asi
+    // que esta pantalla se desmonta enseguida: no hace falta
+    // resetear los campos, la proxima vez que se abra el formulario
+    // arranca de cero por su propio estado inicial.
     onAddTask(task);
     Alert.alert('Exito', 'Tarea capturada localmente');
-    resetForm();
   };
 
   const getInputStyle = (field) => [
@@ -90,8 +86,6 @@ export default function TaskForm({ onAddTask }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nueva tarea</Text>
-
       <View style={styles.field}>
         <Text style={styles.label}>Titulo</Text>
         <TextInput
@@ -164,8 +158,6 @@ export default function TaskForm({ onAddTask }) {
       >
         <Text style={styles.saveButtonText}>Guardar tarea</Text>
       </TouchableOpacity>
-
-      <Text style={styles.listTitle}>Mis tareas</Text>
     </View>
   );
 }
@@ -173,12 +165,6 @@ export default function TaskForm({ onAddTask }) {
 const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.sm,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: spacing.lg,
   },
   field: {
     marginBottom: spacing.md,
@@ -254,12 +240,5 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  listTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
   },
 });

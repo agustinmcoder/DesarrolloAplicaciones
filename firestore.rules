@@ -14,5 +14,12 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.userId;
     }
+
+    // Documento de perfil (avatar). El id del documento es el uid
+    // del usuario, asi que alcanza con compararlo contra quien hace
+    // el pedido: nadie puede leer ni escribir el perfil de otro.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }

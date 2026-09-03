@@ -70,8 +70,6 @@ export default function TaskForm({ onAddTask }) {
       category,
     };
 
-    console.log('Nueva tarea:', newTask);
-
     setSubmitting(true);
     try {
       // onAddTask escribe en Firestore y navega de vuelta a la

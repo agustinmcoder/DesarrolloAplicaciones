@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { signIn, mapAuthError } from '../services/authService';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
@@ -44,69 +45,71 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Text style={styles.title}>TaskFlow</Text>
-        <Text style={styles.subtitle}>Inicia sesion para ver tus tareas</Text>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="tu@email.com"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            returnKeyType="next"
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Contraseña</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Tu contraseña"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            secureTextEntry
-            autoCapitalize="none"
-            returnKeyType="done"
-            onSubmitEditing={handleSignIn}
-          />
-        </View>
-
-        {error && <Text style={styles.errorText}>{error}</Text>}
-
-        <TouchableOpacity
-          style={[styles.button, submitting && styles.buttonDisabled]}
-          onPress={handleSignIn}
-          disabled={submitting}
-          activeOpacity={0.8}
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.buttonText}>{submitting ? 'Ingresando...' : 'Ingresar'}</Text>
-        </TouchableOpacity>
+          <Text style={styles.title}>TaskFlow</Text>
+          <Text style={styles.subtitle}>Inicia sesion para ver tus tareas</Text>
 
-        <TouchableOpacity
-          style={styles.linkButton}
-          onPress={() => navigation.navigate('Register')}
-        >
-          <Text style={styles.linkText}>¿No tenes cuenta? Registrate</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={styles.field}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="tu@email.com"
+              placeholderTextColor={colors.textMuted}
+              selectionColor={colors.primary}
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              returnKeyType="next"
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Contraseña</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Tu contraseña"
+              placeholderTextColor={colors.textMuted}
+              selectionColor={colors.primary}
+              secureTextEntry
+              autoCapitalize="none"
+              returnKeyType="done"
+              onSubmitEditing={handleSignIn}
+            />
+          </View>
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          <TouchableOpacity
+            style={[styles.button, submitting && styles.buttonDisabled]}
+            onPress={handleSignIn}
+            disabled={submitting}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>{submitting ? 'Ingresando...' : 'Ingresar'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.linkText}>¿No tenes cuenta? Registrate</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

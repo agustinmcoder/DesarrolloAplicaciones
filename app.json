@@ -19,6 +19,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TaskFlow necesita acceso a tus fotos para que puedas elegir una imagen de perfil."
+        }
+      ]
+    ]
   }
 }

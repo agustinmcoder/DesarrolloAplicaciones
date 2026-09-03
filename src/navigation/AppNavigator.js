@@ -1,14 +1,10 @@
-import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { onAuthStateChanged } from 'firebase/auth';
-import { useDispatch, useSelector } from 'react-redux';
-import { auth } from '../services/firebaseConfig';
-import { setSession } from '../store/authSlice';
-import { selectAuthChecked, selectCurrentUser } from '../store/selectors';
+import { useAuth } from '../hooks/useAuth';
+import { useAuthListener } from '../hooks/useAuthListener';
 import { colors } from '../constants/colors';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
@@ -104,25 +100,8 @@ function SessionLoading() {
 }
 
 export default function AppNavigator() {
-  const dispatch = useDispatch();
-  const user = useSelector(selectCurrentUser);
-  const authChecked = useSelector(selectAuthChecked);
-
-  useEffect(() => {
-    // onAuthStateChanged dispara una vez al arrancar con la sesion
-    // guardada (o null si no habia ninguna) y de nuevo cada vez que
-    // el usuario hace login/logout. Con eso alcanza para decidir que
-    // stack mostrar; no hace falta leer nada de AsyncStorage a mano.
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      dispatch(
-        setSession(
-          firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null
-        )
-      );
-    });
-
-    return unsubscribe;
-  }, [dispatch]);
+  useAuthListener();
+  const { user, authChecked } = useAuth();
 
   if (!authChecked) {
     return <SessionLoading />;

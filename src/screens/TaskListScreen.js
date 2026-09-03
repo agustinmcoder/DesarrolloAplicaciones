@@ -1,27 +1,11 @@
-import { useEffect, useLayoutEffect } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useLayoutEffect } from 'react';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
 import EmptyState from '../components/EmptyState';
 import TaskItem from '../components/TaskItem';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
-import { setTaskCompleted, subscribeToUserTasks } from '../services/taskService';
-import {
-  selectCurrentUser,
-  selectFilter,
-  selectFilteredTasks,
-  selectTasksStatus,
-} from '../store/selectors';
-import { setFilter, tasksCleared, tasksFailed, tasksLoading, tasksReceived } from '../store/taskSlice';
+import { useTasks } from '../hooks/useTasks';
 
 const FILTERS = [
   { key: 'all', label: 'Todas' },
@@ -29,17 +13,12 @@ const FILTERS = [
   { key: 'completed', label: 'Completadas' },
 ];
 
-// Lista principal de tareas. Los datos ya no viven en Redux por si
-// solos: este componente se suscribe a la coleccion de Firestore del
-// usuario activo (subscribeToUserTasks) y va reflejando cada cambio
-// en el store con tasksReceived, que es lo que lee el resto de la UI.
+// Lista principal de tareas. Toda la logica de Firestore/Redux vive
+// en useTasks; esta pantalla solo se encarga de la presentacion y
+// de la navegacion al detalle.
 export default function TaskListScreen() {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const user = useSelector(selectCurrentUser);
-  const tasks = useSelector(selectFilteredTasks);
-  const activeFilter = useSelector(selectFilter);
-  const status = useSelector(selectTasksStatus);
+  const { tasks, filter, status, setFilter, toggleComplete } = useTasks();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -55,28 +34,11 @@ export default function TaskListScreen() {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    if (!user) {
-      dispatch(tasksCleared());
-      return undefined;
-    }
-
-    dispatch(tasksLoading());
-
-    const unsubscribe = subscribeToUserTasks(
-      user.uid,
-      (userTasks) => dispatch(tasksReceived(userTasks)),
-      (error) => dispatch(tasksFailed(error.message))
-    );
-
-    return unsubscribe;
-  }, [dispatch, user]);
-
   const handleToggleComplete = async (task) => {
     try {
-      await setTaskCompleted(task.id, !task.completed);
-      // No hace falta actualizar el store a mano: el listener de
-      // arriba recibe el cambio desde Firestore y actualiza la lista.
+      await toggleComplete(task);
+      // No hace falta actualizar nada a mano: useTasks esta
+      // suscripto a Firestore y va a traer el cambio solo.
     } catch (error) {
       Alert.alert('Error', 'No se pudo actualizar la tarea. Intenta de nuevo.');
     }
@@ -99,12 +61,12 @@ export default function TaskListScreen() {
       ListHeaderComponent={
         <View style={styles.filterRow}>
           {FILTERS.map((item) => {
-            const selected = item.key === activeFilter;
+            const selected = item.key === filter;
             return (
               <TouchableOpacity
                 key={item.key}
                 style={[styles.filterChip, selected && styles.filterChipSelected]}
-                onPress={() => dispatch(setFilter(item.key))}
+                onPress={() => setFilter(item.key)}
               >
                 <Text
                   style={[

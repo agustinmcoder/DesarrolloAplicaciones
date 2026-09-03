@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createAccount, mapAuthError } from '../services/authService';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
@@ -54,81 +55,88 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Text style={styles.title}>Crear cuenta</Text>
-        <Text style={styles.subtitle}>Empeza a organizar tus tareas en TaskFlow</Text>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="tu@email.com"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            returnKeyType="next"
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Contraseña</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Minimo 6 caracteres"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            secureTextEntry
-            autoCapitalize="none"
-            returnKeyType="next"
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Repetir contraseña</Text>
-          <TextInput
-            style={styles.input}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Repite la contraseña"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            secureTextEntry
-            autoCapitalize="none"
-            returnKeyType="done"
-            onSubmitEditing={handleRegister}
-          />
-        </View>
-
-        {error && <Text style={styles.errorText}>{error}</Text>}
-
-        <TouchableOpacity
-          style={[styles.button, submitting && styles.buttonDisabled]}
-          onPress={handleRegister}
-          disabled={submitting}
-          activeOpacity={0.8}
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.buttonText}>{submitting ? 'Creando cuenta...' : 'Crear cuenta'}</Text>
-        </TouchableOpacity>
+          <Text style={styles.title}>Crear cuenta</Text>
+          <Text style={styles.subtitle}>Empeza a organizar tus tareas en TaskFlow</Text>
 
-        <TouchableOpacity style={styles.linkButton} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.linkText}>¿Ya tenes cuenta? Inicia sesion</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={styles.field}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="tu@email.com"
+              placeholderTextColor={colors.textMuted}
+              selectionColor={colors.primary}
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              returnKeyType="next"
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Contraseña</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Minimo 6 caracteres"
+              placeholderTextColor={colors.textMuted}
+              selectionColor={colors.primary}
+              secureTextEntry
+              autoCapitalize="none"
+              returnKeyType="next"
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Repetir contraseña</Text>
+            <TextInput
+              style={styles.input}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Repite la contraseña"
+              placeholderTextColor={colors.textMuted}
+              selectionColor={colors.primary}
+              secureTextEntry
+              autoCapitalize="none"
+              returnKeyType="done"
+              onSubmitEditing={handleRegister}
+            />
+          </View>
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          <TouchableOpacity
+            style={[styles.button, submitting && styles.buttonDisabled]}
+            onPress={handleRegister}
+            disabled={submitting}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>
+              {submitting ? 'Creando cuenta...' : 'Crear cuenta'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.linkText}>¿Ya tenes cuenta? Inicia sesion</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

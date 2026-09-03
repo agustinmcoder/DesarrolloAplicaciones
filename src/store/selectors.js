@@ -4,6 +4,9 @@
 export const selectCurrentUser = (state) => state.auth.user;
 export const selectAuthChecked = (state) => state.auth.authChecked;
 
+export const selectProfilePhoto = (state) => state.profile.photoURI;
+export const selectProfileStatus = (state) => state.profile.status;
+
 export const selectFilter = (state) => state.tasks.filter;
 export const selectTasksStatus = (state) => state.tasks.status;
 

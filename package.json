@@ -13,6 +13,7 @@
     "expo-image-manipulator": "~57.0.15",
     "expo-image-picker": "~57.0.15",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.21",
     "firebase": "^12.18.0",
     "react": "19.2.3",
     "react-native": "0.86.2",
@@ -26,5 +27,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "eas-cli": "^23.2.0"
+  }
 }

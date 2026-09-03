@@ -180,6 +180,22 @@ La regla que se siguio: **las pantallas no importan nada de `firebase/*` directa
 - **Sin conexion**: se activo el modo avion con la app abierta y se intento crear una tarea; Firestore devuelve el error de red y `TaskFormScreen` lo muestra con `Alert.alert` en lugar de crashear. Al recuperar la conexion, el listener de `useTasks` vuelve a sincronizar solo.
 - **Navegacion rapida**: se toco varias tareas y las pestañas Tareas/Perfil seguido, sin dejar tiempo a que cada pantalla termine de renderizar — no se observaron crashes ni warnings de "cant perform a React state update on an unmounted component" (los `useEffect` de los hooks se dan de baja de su suscripcion al desmontarse).
 
+## Despliegue
+
+La app esta publicada como una **EAS Update** (proyecto `@gosipp/taskflow-app`), lo que permite abrirla desde Expo Go sin tener que compilarla localmente:
+
+**Link para probarla:** https://expo.dev/preview/update?message=Entrega%20final%20TaskFlow%3A%20auth%2C%20Firestore%2C%20avatar&updateRuntimeVersion=1.0.0&slug=taskflow-app&projectId=4fe0ea4f-7610-4b10-aeb7-2a192ccabc81&group=9b657b8e-a0f8-491f-a3e0-3cf5430e6852
+
+Al abrir ese link (desde la compu o el celular) aparece un codigo QR: se escanea con la app **Expo Go** (Android/iOS) y carga TaskFlow tal cual quedo en este commit, sin pasar por ningun build nativo.
+
+Para publicar una actualizacion nueva despues de un cambio de codigo:
+
+```bash
+npx eas update --branch preview --message "Descripcion del cambio"
+```
+
+(Requiere estar logueado con `npx eas login` y tener configurado `eas-cli`, ya incluido como devDependency del proyecto.)
+
 ## Estado final del proyecto
 
 - Registro e inicio de sesion contra Firebase Auth, con mensajes de error legibles.

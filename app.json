@@ -24,9 +24,23 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "TaskFlow necesita acceso a tus fotos para que puedas elegir una imagen de perfil."
+          "photosPermission": "TaskFlow necesita acceso a tus fotos para que puedas elegir una imagen de perfil.",
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4fe0ea4f-7610-4b10-aeb7-2a192ccabc81"
+      }
+    },
+    "owner": "gosipp",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4fe0ea4f-7610-4b10-aeb7-2a192ccabc81"
+    }
   }
 }

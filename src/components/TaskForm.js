@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   categoryChipTextSelected: {
-    color: colors.text,
+    color: colors.textOnPrimary,
   },
   saveButton: {
     backgroundColor: colors.primary,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonText: {
-    color: colors.text,
+    color: colors.textOnPrimary,
     fontSize: 16,
     fontWeight: 'bold',
   },

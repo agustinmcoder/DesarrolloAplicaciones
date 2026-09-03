@@ -1,17 +1,22 @@
 // Paleta de colores principal de TaskFlow.
 // Centralizada aca para que pantallas y componentes no hardcodeen
 // valores sueltos y la app mantenga una apariencia consistente.
+// Linea pastel, dominada por beige y marron.
 
 export const colors = {
-  primary: '#4F46E5',
-  primaryDark: '#3730A3',
-  secondary: '#22C55E',
-  background: '#0F172A',
-  surface: '#1E293B',
-  text: '#F8FAFC',
-  textMuted: '#94A3B8',
-  border: '#334155',
-  danger: '#EF4444',
+  primary: '#8B5E3C',
+  primaryDark: '#6B4226',
+  secondary: '#8CA381',
+  background: '#F5EBDD',
+  surface: '#FFF8EF',
+  text: '#3E2C23',
+  textMuted: '#9C8770',
+  // Texto/iconos que van sobre un fondo de color (botones, badges,
+  // chips seleccionados): en la paleta clara, colors.text queda muy
+  // oscuro para leerse bien ahi encima.
+  textOnPrimary: '#FFF8EF',
+  border: '#E0D0BA',
+  danger: '#B3401F',
 };
 
 export default colors;

@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     borderColor: colors.secondary,
   },
   checkboxMark: {
-    color: colors.background,
+    color: colors.textOnPrimary,
     fontSize: 14,
     fontWeight: 'bold',
   },

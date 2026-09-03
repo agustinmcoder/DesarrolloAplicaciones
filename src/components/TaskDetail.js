@@ -2,17 +2,16 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 
-// createdAt llega como un Timestamp de Firestore (tiene .toDate()).
+// createdAt llega como milisegundos (taskService ya lo convierte
+// desde el Timestamp de Firestore antes de guardarlo en el store).
 // Justo despues de crear la tarea, mientras el servidor todavia no
 // confirmo el serverTimestamp, puede llegar en null por un instante.
 const formatDate = (createdAt) => {
-  const date = createdAt?.toDate ? createdAt.toDate() : null;
-
-  if (!date) {
+  if (!createdAt) {
     return 'Guardando...';
   }
 
-  return date.toLocaleDateString('es-AR', {
+  return new Date(createdAt).toLocaleDateString('es-AR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   categoryBadgeText: {
-    color: colors.text,
+    color: colors.textOnPrimary,
     fontSize: 13,
     fontWeight: '600',
   },

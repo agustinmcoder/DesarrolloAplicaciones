@@ -22,16 +22,21 @@ export function subscribeToUserTasks(userId, onChange, onError) {
   return onSnapshot(
     tasksQuery,
     (snapshot) => {
-      const tasks = snapshot.docs.map((docSnapshot) => ({
-        id: docSnapshot.id,
-        ...docSnapshot.data(),
-      }));
-
-      tasks.sort((a, b) => {
-        const timeA = a.createdAt?.toMillis?.() ?? 0;
-        const timeB = b.createdAt?.toMillis?.() ?? 0;
-        return timeB - timeA;
+      const tasks = snapshot.docs.map((docSnapshot) => {
+        const data = docSnapshot.data();
+        return {
+          id: docSnapshot.id,
+          ...data,
+          // Un Timestamp de Firestore no es serializable (Redux se
+          // queja fuerte de esto), asi que lo convertimos a numero
+          // de una vez aca, antes de que llegue al store. Mientras
+          // el servidor no confirmo el serverTimestamp todavia,
+          // createdAt llega en null por un instante.
+          createdAt: data.createdAt?.toMillis?.() ?? null,
+        };
       });
+
+      tasks.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
 
       onChange(tasks);
     },

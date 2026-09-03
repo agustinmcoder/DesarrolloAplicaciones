@@ -18,21 +18,27 @@ taskflow-app/
     │   └── EmptyState.js           # Mensaje para cuando no hay tareas cargadas
     ├── screens/                    # Vistas conectadas al navigator
     │   ├── WelcomeScreen.js
+    │   ├── LoginScreen.js          # Stack publico: inicio de sesion
+    │   ├── RegisterScreen.js       # Stack publico: alta de cuenta
     │   ├── TaskListScreen.js       # Lista de tareas + filtros (ruta inicial del stack)
     │   ├── TaskDetailScreen.js     # Detalle de una tarea (recibe taskId por params)
     │   ├── TaskFormScreen.js       # Pantalla de "Nueva tarea"
-    │   └── ProfileScreen.js
+    │   └── ProfileScreen.js        # Datos del usuario logueado + cerrar sesion
     ├── navigation/
     │   └── AppNavigator.js         # Tabs + Stack anidado, ver seccion de abajo
     ├── store/                      # Estado global (Redux Toolkit)
     │   ├── store.js                 # configureStore
-    │   ├── taskSlice.js             # createSlice: items + filter, reducers y actions
-    │   └── selectors.js             # Selectores (tareas filtradas, tarea por id)
+    │   ├── authSlice.js             # Sesion del usuario (user, authChecked)
+    │   ├── taskSlice.js             # Espejo local de la coleccion "tasks" de Firestore
+    │   └── selectors.js             # Selectores (tareas filtradas, tarea por id, sesion)
     ├── assets/                     # Imagenes y fuentes locales
     ├── constants/                   # Colores y espaciados globales
     │   ├── colors.js
     │   └── spacing.js
-    └── services/                    # Conexion a APIs/Firebase (proximos modulos)
+    └── services/                    # Firebase (Auth + Firestore)
+        ├── firebaseConfig.js         # initializeApp/Auth/Firestore desde variables de entorno
+        ├── authService.js            # createAccount, signIn, logOut, mapAuthError
+        └── taskService.js            # CRUD de tareas en Firestore (subscribeToUserTasks, createTask, ...)
 ```
 
 ## Requisitos previos
@@ -75,37 +81,78 @@ La app usa [React Navigation](https://reactnavigation.org/) con dos navegadores 
 
 La pestaña "Perfil" no tiene stack propio porque, por ahora, es una sola pantalla.
 
-## Estado global con Redux Toolkit (Checkpoint 6)
+## Configuracion de Firebase (Checkpoint 7)
 
-Las tareas dejaron de vivir en un `useState` o un Context local: ahora viven en un store de Redux, armado con [`@reduxjs/toolkit`](https://redux-toolkit.js.org/) y conectado a las pantallas con [`react-redux`](https://react-redux.js.org/).
+La app necesita un proyecto de Firebase propio con **Authentication** (metodo Email/Password) y **Firestore** habilitados. Pasos:
 
-- **`src/store/taskSlice.js`**: `createSlice` con el estado `{ items, filter }` y cuatro reducers:
-  - `addTask` — usa el callback `prepare` para generar el `id` (con `nanoid`), `completed: false` y `createdAt` a partir de lo que manda el formulario (`title`, `description`, `category`).
-  - `toggleTaskStatus` — busca la tarea por `id` y invierte su `completed`.
-  - `deleteTask` — la saca del arreglo.
+1. Anda a la [consola de Firebase](https://console.firebase.google.com/) y creá un proyecto nuevo (es gratis).
+2. **Authentication** → pestaña *Sign-in method* → habilita el proveedor **Email/Password**.
+3. **Firestore Database** → *Create database* → arrancá en modo de prueba (o pegá las reglas de [`firestore.rules`](./firestore.rules) en la pestaña *Rules*, que son las que va a usar la app en producción).
+4. **Project settings** (el engranaje) → *General* → en "Your apps" agregá una app **Web** (icono `</>`) → copiá el objeto `firebaseConfig` que te muestra.
+5. En la raiz del proyecto, copiá `.env.example` a `.env` y completá cada valor con lo que copiaste en el paso anterior:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+6. Reiniciá `npx expo start` (las variables de entorno se leen al arrancar el bundler).
+
+El `.env` nunca se sube al repositorio (está en `.gitignore`); cada quien que clone el proyecto arma el suyo con su propio proyecto de Firebase.
+
+### Seguridad: una tarea, un dueño
+
+El filtrado por `userId` en `taskService.subscribeToUserTasks` hace que la lista solo pida las tareas del usuario activo, pero eso por si solo no evita que alguien le pegue directo a la API de Firestore pidiendo la coleccion entera. Por eso [`firestore.rules`](./firestore.rules) exige, a nivel de base de datos, que `request.auth.uid` coincida con el `userId` del documento tanto para leer/editar/borrar como para crear — un usuario autenticado jamas puede tocar un documento que no sea suyo, aunque conozca su ID.
+
+## Estado global con Redux Toolkit (Checkpoint 6, actualizado en el 7)
+
+El store sigue armado con [`@reduxjs/toolkit`](https://redux-toolkit.js.org/) y conectado a las pantallas con [`react-redux`](https://react-redux.js.org/), pero desde el Checkpoint 7 las tareas ya no "nacen" en Redux: nacen en Firestore, y el slice es un espejo local que se mantiene sincronizado por un listener.
+
+- **`src/store/authSlice.js`**: guarda la sesion (`{ user, authChecked }`). `user` es `{ uid, email }` o `null`; `authChecked` distingue "todavia no sabemos si hay sesion" de "sabemos que no hay nadie logueado", para no flashear la pantalla de Login en el arranque.
+- **`src/store/taskSlice.js`**: `createSlice` con el estado `{ items, filter, status, error }`.
+  - `tasksLoading` / `tasksReceived` / `tasksFailed` — reflejan el ciclo de vida de la suscripcion a Firestore (ver mas abajo).
   - `setFilter` — guarda el filtro activo (`all` / `pending` / `completed`).
-- **`src/store/store.js`**: `configureStore` con el slice de tareas montado en `state.tasks`.
-- **`src/store/selectors.js`**: `selectFilteredTasks`, `selectFilter` y `selectTaskById` para no repetir la logica de filtrado en cada pantalla.
+  - `tasksCleared` — vacia la lista al cerrar sesion, para que un segundo usuario en el mismo dispositivo no llegue a ver ni por un instante las tareas del anterior.
+- **`src/store/store.js`**: `configureStore` con los slices `auth` y `tasks`.
+- **`src/store/selectors.js`**: `selectCurrentUser`, `selectAuthChecked`, `selectFilteredTasks`, `selectFilter`, `selectTasksStatus` y `selectTaskById`.
 
-`App.js` envuelve todo con `<Provider store={store}>`. Desde ahi:
+Ya no hay reducers `addTask` / `toggleTaskStatus` que muten `items` a mano: escribir una tarea es responsabilidad de Firestore (`taskService.js`), y Redux solo refleja lo que Firestore confirma.
 
-- `TaskListScreen` lee las tareas ya filtradas con `useSelector(selectFilteredTasks)`, muestra los chips de filtro (que despachan `setFilter`) y despacha `toggleTaskStatus` al tocar el circulo de cada item.
-- `TaskFormScreen` reemplaza el guardado local por `dispatch(addTask(...))` y recien despues navega de vuelta a `TaskList`.
-- `TaskDetailScreen` resuelve la tarea con `useSelector(selectTaskById(taskId))` y despacha `toggleTaskStatus` desde el boton de completar — como lee del mismo store que la lista, el cambio se ve reflejado al volver atras sin pasar nada por `route.params`.
+## Autenticacion y persistencia con Firebase (Checkpoint 7)
 
-Como el filtro tambien vive en el store (no en un estado local de `TaskListScreen`), se mantiene aunque el usuario salte a la pestaña "Perfil" y vuelva.
+- **`src/services/firebaseConfig.js`**: inicializa la app de Firebase con las variables de entorno, `auth` (con persistencia en `AsyncStorage`, para no pedir login de nuevo en cada apertura) y `db` (Firestore).
+- **`src/services/authService.js`**: `createAccount`, `signIn`, `logOut` (wrappers de Firebase Auth) y `mapAuthError`, que traduce codigos como `auth/invalid-credential` a mensajes en español para mostrar en pantalla.
+- **`src/services/taskService.js`**: todo el CRUD de tareas contra la coleccion `tasks` de Firestore —
+  - `subscribeToUserTasks(userId, onChange, onError)` — `onSnapshot` con `where('userId', '==', userId')`, ordenado del lado del cliente por `createdAt` (evita tener que crear un indice compuesto en Firestore).
+  - `createTask(userId, { title, description, category })` — `addDoc` con `userId`, `completed: false` y `createdAt: serverTimestamp()`.
+  - `setTaskCompleted(taskId, completed)` / `removeTask(taskId)` — `updateDoc` / `deleteDoc` por id.
+- **`src/navigation/AppNavigator.js`** ahora decide que stack mostrar segun la sesion:
+  - Mientras `authChecked` es `false` (todavia no llego la primera respuesta de `onAuthStateChanged`), muestra un spinner.
+  - Sin usuario → `PublicNavigator` (`Login` / `Register`).
+  - Con usuario → `PrivateNavigator`, el mismo Tab + Stack de tareas de los checkpoints anteriores.
+  
+  El listener de `onAuthStateChanged` vive en un solo lugar (`AppNavigator`) y despacha `setSession`; ninguna pantalla navega "a mano" al loguearse o desloguearse, simplemente cambia el usuario en el store y el navigator reacciona solo.
+- **`TaskListScreen`** se suscribe a `subscribeToUserTasks` en un `useEffect` (con el `uid` del usuario activo como dependencia) y despacha `tasksReceived` en cada cambio; al desmontarse, se da de baja de la suscripcion. Marcar una tarea como completada llama a `setTaskCompleted` directo — no hay un dispatch manual, el listener ya se encarga de traer el cambio de vuelta.
+- **`TaskFormScreen`** llama a `createTask(user.uid, task)` y solo navega de vuelta a la lista si la escritura no tira error; si falla, se lo muestra al usuario con `Alert.alert` y lo deja reintentar sin perder lo que ya habia tipeado.
+- **`ProfileScreen`** muestra el email de la cuenta logueada y tiene el boton de "Cerrar sesion" (con confirmacion) que llama a `authService.logOut()`.
 
-## Estado actual (Checkpoint 6)
+### Como se probaron los flujos
 
-- Navegacion por pestañas (Tareas / Perfil) con un Stack Navigator anidado para el flujo de tareas.
-- Estado global de tareas con Redux Toolkit: `addTask`, `toggleTaskStatus`, `deleteTask` y `setFilter` conectados a la UI via `useSelector`/`useDispatch`.
-- Filtro de tareas (Todas / Pendientes / Completadas) persistente entre navegaciones.
-- Paso de parametros (`taskId`, `title`) al entrar al detalle de una tarea, y sincronizacion inmediata con la lista al marcarla como completada.
-- Redireccion programatica desde el formulario de creacion de vuelta a la lista.
-- Headers con titulos coherentes por pantalla (`Mis tareas`, `Detalle de tarea`, `Nueva tarea`).
-- Estado vacio y validaciones del formulario de los checkpoints anteriores, ahora alimentados por el store en lugar de estado local.
+- **Registro**: se creo una cuenta nueva desde `RegisterScreen` con un email de prueba; la app paso sola al stack privado (sin tocar nada de navegacion) y el usuario aparecio en Firebase Console → Authentication → Users.
+- **Persistencia de sesion**: con la cuenta logueada, se cerro la app por completo (no solo background) y se volvio a abrir — entro directo a la lista de tareas, sin pedir login de nuevo.
+- **Login con error**: se probo con una contraseña incorrecta y con un email inexistente; en ambos casos `LoginScreen` mostro el mensaje "Email o contraseña incorrectos." en lugar de romper o quedarse colgado.
+- **Alta de tarea**: se creo una tarea desde `TaskFormScreen` y se verifico que aparece (a) en la lista de la app al instante y (b) como documento nuevo en Firebase Console → Firestore → coleccion `tasks`, con el `userId` de la cuenta usada.
+- **Completar tarea**: se marco una tarea como completada desde el detalle, se volvio a la lista y el cambio ya estaba reflejado (via el listener), y el documento en Firestore quedo con `completed: true`.
+- **Separacion por usuario**: se registro una segunda cuenta y se verifico que arranca sin ver ninguna tarea de la primera cuenta (la query filtra por `userId`, y `firestore.rules` lo refuerza a nivel de base de datos).
+
+## Estado actual (Checkpoint 7)
+
+- Registro e inicio de sesion contra Firebase Auth, con mensajes de error legibles.
+- Persistencia de sesion entre reinicios de la app (`AsyncStorage` + `onAuthStateChanged`).
+- Navegacion protegida: sin sesion solo se puede ver Login/Register; con sesion, el Tab + Stack de tareas de siempre.
+- Tareas persistidas en Firestore, separadas por usuario (`userId` + reglas de seguridad en `firestore.rules`).
+- Lista de tareas en tiempo real via `onSnapshot`, con filtro (Todas / Pendientes / Completadas) que sigue viviendo en Redux.
+- Cerrar sesion desde la pantalla de Perfil.
 
 ## Proximos pasos
 
-- **Modulo 7:** conexion con Firebase (persistencia real + `createAsyncThunk` + Stack de autenticacion)
-- **Modulo 8:** ProfileCard conectado a camara y datos de usuario autenticado, pulido de transiciones
+- **Modulo 8 (Final):** camara/galeria con `expo-image-picker` para la foto de perfil, subida a Firebase Storage, pulido de UX y transiciones, preparacion de una build de prueba.

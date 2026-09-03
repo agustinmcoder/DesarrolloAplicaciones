@@ -1,11 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './authSlice';
 import tasksReducer from './taskSlice';
 
-// Store central de la app. Por ahora solo tiene el slice de
-// tareas; cuando llegue el Modulo 7 (Firebase) probablemente se
-// sume un slice de auth al lado de este.
+// Store central de la app: sesion del usuario y espejo local de
+// sus tareas en Firestore.
 export const store = configureStore({
   reducer: {
+    auth: authReducer,
     tasks: tasksReducer,
   },
 });

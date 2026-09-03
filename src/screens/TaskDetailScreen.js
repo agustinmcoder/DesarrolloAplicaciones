@@ -1,20 +1,21 @@
 import { useRoute } from '@react-navigation/native';
-import { StyleSheet, Text, View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { useSelector } from 'react-redux';
 import TaskDetail from '../components/TaskDetail';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
+import { setTaskCompleted } from '../services/taskService';
 import { selectTaskById } from '../store/selectors';
-import { toggleTaskStatus } from '../store/taskSlice';
 
 // Recibe el id de la tarea por route.params y lee los datos
-// completos desde el store. Como el item viene del mismo array
-// que alimenta la lista, marcar "completada" aca se refleja al
-// volver atras sin pasar nada por parametros.
+// completos desde el store, que a su vez se mantiene sincronizado
+// con Firestore por el listener de TaskListScreen. Marcar como
+// completada escribe directo en el documento; el cambio se ve
+// reflejado en la lista al volver atras porque ambas pantallas leen
+// del mismo listener, no hace falta pasar nada por parametros.
 export default function TaskDetailScreen() {
   const route = useRoute();
   const { taskId } = route.params;
-  const dispatch = useDispatch();
   const task = useSelector(selectTaskById(taskId));
 
   if (!task) {
@@ -25,9 +26,15 @@ export default function TaskDetailScreen() {
     );
   }
 
-  return (
-    <TaskDetail task={task} onToggleComplete={() => dispatch(toggleTaskStatus(task.id))} />
-  );
+  const handleToggleComplete = async () => {
+    try {
+      await setTaskCompleted(task.id, !task.completed);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo actualizar la tarea. Intenta de nuevo.');
+    }
+  };
+
+  return <TaskDetail task={task} onToggleComplete={handleToggleComplete} />;
 }
 
 const styles = StyleSheet.create({

@@ -1,67 +1,45 @@
-import { createSlice, nanoid } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
-// Un par de tareas de ejemplo para no arrancar con la lista vacia
-// en cada reinicio de la app durante las pruebas.
+// Las tareas ya no nacen en el store: nacen en Firestore. Este
+// slice ahora es solo un espejo local de la coleccion "tasks" del
+// usuario activo, mantenido al dia por el listener de
+// subscribeToUserTasks (ver taskService.js y TaskListScreen).
 const initialState = {
-  items: [
-    {
-      id: 'seed-1',
-      title: 'Revisar entrega de TaskFlow',
-      description: 'Repasar el checklist del checkpoint antes de subir el repositorio.',
-      category: 'Estudio',
-      completed: false,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'seed-2',
-      title: 'Preparar reunion de equipo',
-      description: 'Armar la agenda con los temas pendientes del sprint.',
-      category: 'Trabajo',
-      completed: true,
-      createdAt: new Date().toISOString(),
-    },
-  ],
+  items: [],
   filter: 'all', // 'all' | 'pending' | 'completed'
+  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'error'
+  error: null,
 };
 
 const taskSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    // El formulario solo manda title/description/category; el id,
-    // el estado inicial de completado y la fecha se resuelven aca
-    // via el callback "prepare" de Redux Toolkit.
-    addTask: {
-      reducer(state, action) {
-        state.items.unshift(action.payload);
-      },
-      prepare({ title, description, category }) {
-        return {
-          payload: {
-            id: nanoid(),
-            title,
-            description,
-            category,
-            completed: false,
-            createdAt: new Date().toISOString(),
-          },
-        };
-      },
+    tasksLoading(state) {
+      state.status = 'loading';
+      state.error = null;
     },
-    toggleTaskStatus(state, action) {
-      const task = state.items.find((item) => item.id === action.payload);
-      if (task) {
-        task.completed = !task.completed;
-      }
+    tasksReceived(state, action) {
+      state.items = action.payload;
+      state.status = 'succeeded';
     },
-    deleteTask(state, action) {
-      state.items = state.items.filter((item) => item.id !== action.payload);
+    tasksFailed(state, action) {
+      state.status = 'error';
+      state.error = action.payload;
     },
     setFilter(state, action) {
       state.filter = action.payload;
     },
+    // Se limpia al cerrar sesion para que un segundo usuario en el
+    // mismo dispositivo no llegue a ver, ni por un instante, las
+    // tareas del usuario anterior.
+    tasksCleared(state) {
+      state.items = [];
+      state.status = 'idle';
+    },
   },
 });
 
-export const { addTask, toggleTaskStatus, deleteTask, setFilter } = taskSlice.actions;
+export const { tasksLoading, tasksReceived, tasksFailed, setFilter, tasksCleared } =
+  taskSlice.actions;
 export default taskSlice.reducer;

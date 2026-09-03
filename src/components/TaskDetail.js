@@ -2,14 +2,24 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString('es-AR', {
+// createdAt llega como un Timestamp de Firestore (tiene .toDate()).
+// Justo despues de crear la tarea, mientras el servidor todavia no
+// confirmo el serverTimestamp, puede llegar en null por un instante.
+const formatDate = (createdAt) => {
+  const date = createdAt?.toDate ? createdAt.toDate() : null;
+
+  if (!date) {
+    return 'Guardando...';
+  }
+
+  return date.toLocaleDateString('es-AR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
+};
 
 // Vista de detalle de una tarea. Vive dentro del Stack de tareas,
 // asi que volver a la lista lo resuelve la flecha nativa del

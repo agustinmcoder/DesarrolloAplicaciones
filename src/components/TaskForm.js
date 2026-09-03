@@ -27,6 +27,7 @@ export default function TaskForm({ onAddTask }) {
   // errores antes de que el usuario haya interactuado con ellos.
   const [touched, setTouched] = useState({ title: false, description: false });
   const [focusedField, setFocusedField] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const errors = {
     title:
@@ -50,19 +51,19 @@ export default function TaskForm({ onAddTask }) {
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     // Al intentar guardar marcamos todo como tocado para que
     // se vean los errores aunque el usuario no haya pasado por
     // cada campo individualmente.
     setTouched({ title: true, description: true });
 
-    if (hasErrors) {
+    if (hasErrors || submitting) {
       return;
     }
 
-    // El id, el "completed" inicial y la fecha los resuelve el
-    // reducer addTask (ver taskSlice); aca solo mandamos lo que
-    // el usuario efectivamente cargo en el formulario.
+    // El id, el "completed" inicial y la fecha de creacion los
+    // resuelve Firestore (ver taskService.createTask); aca solo
+    // mandamos lo que el usuario efectivamente cargo en el formulario.
     const newTask = {
       title: title.trim(),
       description: description.trim(),
@@ -70,12 +71,21 @@ export default function TaskForm({ onAddTask }) {
     };
 
     console.log('Nueva tarea:', newTask);
-    // onAddTask hace el dispatch y navega de vuelta a la lista, asi
-    // que esta pantalla se desmonta enseguida: no hace falta
-    // resetear los campos, la proxima vez que se abra el formulario
-    // arranca de cero por su propio estado inicial.
-    onAddTask(newTask);
-    Alert.alert('Exito', 'Tarea capturada localmente');
+
+    setSubmitting(true);
+    try {
+      // onAddTask escribe en Firestore y navega de vuelta a la
+      // lista si sale bien. Si tira, TaskFormScreen ya le mostro el
+      // error al usuario; aca simplemente no festejamos el guardado
+      // y dejamos los campos como estaban para poder reintentar.
+      await onAddTask(newTask);
+      Alert.alert('Exito', 'Tarea capturada localmente');
+    } catch (error) {
+      // El error ya se le mostro al usuario en la pantalla que llama
+      // a onAddTask; no hace falta duplicar el aviso aca.
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getInputStyle = (field) => [
@@ -152,11 +162,14 @@ export default function TaskForm({ onAddTask }) {
       </View>
 
       <TouchableOpacity
-        style={[styles.saveButton, hasErrors && styles.saveButtonDisabled]}
+        style={[styles.saveButton, (hasErrors || submitting) && styles.saveButtonDisabled]}
         onPress={handleAddTask}
+        disabled={submitting}
         activeOpacity={0.8}
       >
-        <Text style={styles.saveButtonText}>Guardar tarea</Text>
+        <Text style={styles.saveButtonText}>
+          {submitting ? 'Guardando...' : 'Guardar tarea'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

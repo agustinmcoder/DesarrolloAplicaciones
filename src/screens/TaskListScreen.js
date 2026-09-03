@@ -1,13 +1,27 @@
-import { useLayoutEffect } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useLayoutEffect } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import EmptyState from '../components/EmptyState';
 import TaskItem from '../components/TaskItem';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
-import { selectFilter, selectFilteredTasks } from '../store/selectors';
-import { setFilter, toggleTaskStatus } from '../store/taskSlice';
+import { setTaskCompleted, subscribeToUserTasks } from '../services/taskService';
+import {
+  selectCurrentUser,
+  selectFilter,
+  selectFilteredTasks,
+  selectTasksStatus,
+} from '../store/selectors';
+import { setFilter, tasksCleared, tasksFailed, tasksLoading, tasksReceived } from '../store/taskSlice';
 
 const FILTERS = [
   { key: 'all', label: 'Todas' },
@@ -15,16 +29,17 @@ const FILTERS = [
   { key: 'completed', label: 'Completadas' },
 ];
 
-// Lista principal de tareas. El formulario de carga vive en su
-// propia pantalla (TaskForm); esta se abre desde el boton
-// "+ Nueva" del header y al guardar vuelve para aca. Los datos y
-// el filtro activo salen del store de Redux, asi que se mantienen
-// sin importar a que pestaña navegue el usuario.
+// Lista principal de tareas. Los datos ya no viven en Redux por si
+// solos: este componente se suscribe a la coleccion de Firestore del
+// usuario activo (subscribeToUserTasks) y va reflejando cada cambio
+// en el store con tasksReceived, que es lo que lee el resto de la UI.
 export default function TaskListScreen() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const user = useSelector(selectCurrentUser);
   const tasks = useSelector(selectFilteredTasks);
   const activeFilter = useSelector(selectFilter);
+  const status = useSelector(selectTasksStatus);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -39,6 +54,41 @@ export default function TaskListScreen() {
       ),
     });
   }, [navigation]);
+
+  useEffect(() => {
+    if (!user) {
+      dispatch(tasksCleared());
+      return undefined;
+    }
+
+    dispatch(tasksLoading());
+
+    const unsubscribe = subscribeToUserTasks(
+      user.uid,
+      (userTasks) => dispatch(tasksReceived(userTasks)),
+      (error) => dispatch(tasksFailed(error.message))
+    );
+
+    return unsubscribe;
+  }, [dispatch, user]);
+
+  const handleToggleComplete = async (task) => {
+    try {
+      await setTaskCompleted(task.id, !task.completed);
+      // No hace falta actualizar el store a mano: el listener de
+      // arriba recibe el cambio desde Firestore y actualiza la lista.
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo actualizar la tarea. Intenta de nuevo.');
+    }
+  };
+
+  if (status === 'loading' && tasks.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -76,7 +126,7 @@ export default function TaskListScreen() {
           onPress={() =>
             navigation.navigate('TaskDetail', { taskId: item.id, title: item.title })
           }
-          onToggleComplete={() => dispatch(toggleTaskStatus(item.id))}
+          onToggleComplete={() => handleToggleComplete(item)}
         />
       )}
     />
@@ -87,6 +137,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  centered: {
+    flex: 1,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     padding: spacing.lg,

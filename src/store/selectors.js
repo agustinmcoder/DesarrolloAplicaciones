@@ -1,7 +1,11 @@
 // Selectores chicos para no repetir la logica de filtrado/busqueda
-// en cada pantalla que necesita leer del slice de tareas.
+// en cada pantalla que necesita leer del slice de tareas o de auth.
+
+export const selectCurrentUser = (state) => state.auth.user;
+export const selectAuthChecked = (state) => state.auth.authChecked;
 
 export const selectFilter = (state) => state.tasks.filter;
+export const selectTasksStatus = (state) => state.tasks.status;
 
 export const selectFilteredTasks = (state) => {
   const { items, filter } = state.tasks;

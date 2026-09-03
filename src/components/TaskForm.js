@@ -60,21 +60,21 @@ export default function TaskForm({ onAddTask }) {
       return;
     }
 
-    const task = {
-      id: Date.now().toString(),
+    // El id, el "completed" inicial y la fecha los resuelve el
+    // reducer addTask (ver taskSlice); aca solo mandamos lo que
+    // el usuario efectivamente cargo en el formulario.
+    const newTask = {
       title: title.trim(),
       description: description.trim(),
       category,
-      completed: false,
-      createdAt: new Date(),
     };
 
-    console.log('Nueva tarea:', task);
-    // onAddTask guarda la tarea y navega de vuelta a la lista, asi
+    console.log('Nueva tarea:', newTask);
+    // onAddTask hace el dispatch y navega de vuelta a la lista, asi
     // que esta pantalla se desmonta enseguida: no hace falta
     // resetear los campos, la proxima vez que se abra el formulario
     // arranca de cero por su propio estado inicial.
-    onAddTask(task);
+    onAddTask(newTask);
     Alert.alert('Exito', 'Tarea capturada localmente');
   };
 

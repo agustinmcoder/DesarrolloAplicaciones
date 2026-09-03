@@ -1,18 +1,21 @@
 import { useRoute } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import TaskDetail from '../components/TaskDetail';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
-import { useTasks } from '../context/TasksContext';
+import { selectTaskById } from '../store/selectors';
+import { toggleTaskStatus } from '../store/taskSlice';
 
-// Recibe el id de la tarea por route.params y busca los datos
-// completos en el TasksContext. Solo viajamos el id (y el titulo,
-// como respaldo) por el parametro; el resto se resuelve aca.
+// Recibe el id de la tarea por route.params y lee los datos
+// completos desde el store. Como el item viene del mismo array
+// que alimenta la lista, marcar "completada" aca se refleja al
+// volver atras sin pasar nada por parametros.
 export default function TaskDetailScreen() {
   const route = useRoute();
   const { taskId } = route.params;
-  const { getTaskById, toggleComplete } = useTasks();
-  const task = getTaskById(taskId);
+  const dispatch = useDispatch();
+  const task = useSelector(selectTaskById(taskId));
 
   if (!task) {
     return (
@@ -22,7 +25,9 @@ export default function TaskDetailScreen() {
     );
   }
 
-  return <TaskDetail task={task} onToggleComplete={() => toggleComplete(task.id)} />;
+  return (
+    <TaskDetail task={task} onToggleComplete={() => dispatch(toggleTaskStatus(task.id))} />
+  );
 }
 
 const styles = StyleSheet.create({

@@ -1,19 +1,21 @@
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 import TaskForm from '../components/TaskForm';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
-import { useTasks } from '../context/TasksContext';
+import { addTask } from '../store/taskSlice';
 
 // Pantalla de carga de tareas. El formulario en si es el mismo
-// componente del Modulo 3/4; lo unico nuevo es que ahora, al
-// guardar, navega de vuelta a la lista en lugar de solo limpiarse.
+// componente de checkpoints anteriores; lo unico que cambia es que
+// ahora, en vez de guardar en un estado local o un Context, hace
+// dispatch de addTask contra el store global.
 export default function TaskFormScreen() {
   const navigation = useNavigation();
-  const { addTask } = useTasks();
+  const dispatch = useDispatch();
 
   const handleAddTask = (task) => {
-    addTask(task);
+    dispatch(addTask(task));
     navigation.navigate('TaskList');
   };
 

@@ -6,7 +6,7 @@ App movil de gestion de tareas, desarrollada con [Expo](https://expo.dev) (React
 
 ```
 taskflow-app/
-├── App.js                       # Punto de entrada: TasksProvider + AppNavigator
+├── App.js                       # Punto de entrada: Provider de Redux + AppNavigator
 ├── index.js                      # Registro de la app (generado por Expo)
 ├── app.json                       # Configuracion de Expo
 └── src/
@@ -18,14 +18,16 @@ taskflow-app/
     │   └── EmptyState.js           # Mensaje para cuando no hay tareas cargadas
     ├── screens/                    # Vistas conectadas al navigator
     │   ├── WelcomeScreen.js
-    │   ├── TaskListScreen.js       # Lista de tareas (ruta inicial del stack)
+    │   ├── TaskListScreen.js       # Lista de tareas + filtros (ruta inicial del stack)
     │   ├── TaskDetailScreen.js     # Detalle de una tarea (recibe taskId por params)
     │   ├── TaskFormScreen.js       # Pantalla de "Nueva tarea"
     │   └── ProfileScreen.js
     ├── navigation/
     │   └── AppNavigator.js         # Tabs + Stack anidado, ver seccion de abajo
-    ├── context/
-    │   └── TasksContext.js         # Estado compartido de tareas (interino a Redux)
+    ├── store/                      # Estado global (Redux Toolkit)
+    │   ├── store.js                 # configureStore
+    │   ├── taskSlice.js             # createSlice: items + filter, reducers y actions
+    │   └── selectors.js             # Selectores (tareas filtradas, tarea por id)
     ├── assets/                     # Imagenes y fuentes locales
     ├── constants/                   # Colores y espaciados globales
     │   ├── colors.js
@@ -73,20 +75,37 @@ La app usa [React Navigation](https://reactnavigation.org/) con dos navegadores 
 
 La pestaña "Perfil" no tiene stack propio porque, por ahora, es una sola pantalla.
 
-### Por que Context y no props
+## Estado global con Redux Toolkit (Checkpoint 6)
 
-Antes, `HomeScreen` mantenia el arreglo de tareas en un solo `useState` porque formulario, lista y detalle eran la misma pantalla. Al separar cada uno en su propia ruta del stack, ya no pueden compartir estado por props (son pantallas distintas, no componentes hijos entre si). Para no anticipar Redux (Modulo 6) armamos un `TasksContext` chico (`src/context/TasksContext.js`) que expone `tasks`, `addTask`, `toggleComplete` y `getTaskById` a cualquier pantalla envuelta en `TasksProvider`. Cuando llegue Redux, esta es la unica pieza que se reemplaza — las pantallas ya consumen los datos a traves de un hook (`useTasks`), no de un padre comun.
+Las tareas dejaron de vivir en un `useState` o un Context local: ahora viven en un store de Redux, armado con [`@reduxjs/toolkit`](https://redux-toolkit.js.org/) y conectado a las pantallas con [`react-redux`](https://react-redux.js.org/).
 
-## Estado actual (Checkpoint 5)
+- **`src/store/taskSlice.js`**: `createSlice` con el estado `{ items, filter }` y cuatro reducers:
+  - `addTask` — usa el callback `prepare` para generar el `id` (con `nanoid`), `completed: false` y `createdAt` a partir de lo que manda el formulario (`title`, `description`, `category`).
+  - `toggleTaskStatus` — busca la tarea por `id` y invierte su `completed`.
+  - `deleteTask` — la saca del arreglo.
+  - `setFilter` — guarda el filtro activo (`all` / `pending` / `completed`).
+- **`src/store/store.js`**: `configureStore` con el slice de tareas montado en `state.tasks`.
+- **`src/store/selectors.js`**: `selectFilteredTasks`, `selectFilter` y `selectTaskById` para no repetir la logica de filtrado en cada pantalla.
+
+`App.js` envuelve todo con `<Provider store={store}>`. Desde ahi:
+
+- `TaskListScreen` lee las tareas ya filtradas con `useSelector(selectFilteredTasks)`, muestra los chips de filtro (que despachan `setFilter`) y despacha `toggleTaskStatus` al tocar el circulo de cada item.
+- `TaskFormScreen` reemplaza el guardado local por `dispatch(addTask(...))` y recien despues navega de vuelta a `TaskList`.
+- `TaskDetailScreen` resuelve la tarea con `useSelector(selectTaskById(taskId))` y despacha `toggleTaskStatus` desde el boton de completar — como lee del mismo store que la lista, el cambio se ve reflejado al volver atras sin pasar nada por `route.params`.
+
+Como el filtro tambien vive en el store (no en un estado local de `TaskListScreen`), se mantiene aunque el usuario salte a la pestaña "Perfil" y vuelva.
+
+## Estado actual (Checkpoint 6)
 
 - Navegacion por pestañas (Tareas / Perfil) con un Stack Navigator anidado para el flujo de tareas.
-- Paso de parametros (`taskId`, `title`) al entrar al detalle de una tarea.
+- Estado global de tareas con Redux Toolkit: `addTask`, `toggleTaskStatus`, `deleteTask` y `setFilter` conectados a la UI via `useSelector`/`useDispatch`.
+- Filtro de tareas (Todas / Pendientes / Completadas) persistente entre navegaciones.
+- Paso de parametros (`taskId`, `title`) al entrar al detalle de una tarea, y sincronizacion inmediata con la lista al marcarla como completada.
 - Redireccion programatica desde el formulario de creacion de vuelta a la lista.
 - Headers con titulos coherentes por pantalla (`Mis tareas`, `Detalle de tarea`, `Nueva tarea`).
-- Estado vacio, validaciones del formulario y marcado de completada de los checkpoints anteriores, ahora repartidos entre pantallas en lugar de vivir en una sola.
+- Estado vacio y validaciones del formulario de los checkpoints anteriores, ahora alimentados por el store en lugar de estado local.
 
 ## Proximos pasos
 
-- **Modulo 6:** reemplazar `TasksContext` por Redux Toolkit
-- **Modulo 7:** conexion con Firebase (persistencia real + Stack de autenticacion)
+- **Modulo 7:** conexion con Firebase (persistencia real + `createAsyncThunk` + Stack de autenticacion)
 - **Modulo 8:** ProfileCard conectado a camara y datos de usuario autenticado, pulido de transiciones
